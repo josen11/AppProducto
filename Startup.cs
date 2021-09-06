@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -30,10 +31,10 @@ namespace ProductsApi
         public void ConfigureServices(IServiceCollection services)
         {
             //Agregar Data Context and Connection String
-            services.AddDbContext<DataContext>(options => options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<DataContext>(options => options.UseNpgsql(Configuration.GetConnectionString("ProdConnection")));
             //Injection of dependencies - Agregar el DataContext
             services.AddScoped<IDataContext>(provider => provider.GetService<DataContext>());
-             //Injection of dependencies - Agregar el Interfaz del Product Repository
+            //Injection of dependencies - Agregar el Interfaz del Product Repository
             services.AddScoped<IProductRepository, ProductRepository>();
             //Agregamos los APIs al proyecto    
             services.AddControllers();
@@ -53,7 +54,15 @@ namespace ProductsApi
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProductsApi v1"));
             }
+        
+            // Nos ayudara cuando utilizemos NGINX como Reverse Proxy
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
 
+            app.UseAuthentication();
+            
             app.UseHttpsRedirection();
 
             app.UseRouting();
