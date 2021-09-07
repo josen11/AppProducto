@@ -31,7 +31,7 @@ namespace ProductsApi
         public void ConfigureServices(IServiceCollection services)
         {
             //Agregar Data Context and Connection String
-            services.AddDbContext<DataContext>(options => options.UseNpgsql(Configuration.GetConnectionString("ProdConnection")));
+            services.AddDbContext<DataContext>(options => options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
             //Injection of dependencies - Agregar el DataContext
             services.AddScoped<IDataContext>(provider => provider.GetService<DataContext>());
             //Injection of dependencies - Agregar el Interfaz del Product Repository
@@ -48,20 +48,20 @@ namespace ProductsApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Nos ayudara cuando utilizemos NGINX como Reverse Proxy
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
+        
+            app.UseAuthentication();
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProductsApi v1"));
             }
-        
-            // Nos ayudara cuando utilizemos NGINX como Reverse Proxy
-            app.UseForwardedHeaders(new ForwardedHeadersOptions
-            {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-            });
-
-            app.UseAuthentication();
             
             app.UseHttpsRedirection();
 
